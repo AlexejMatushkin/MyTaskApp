@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Базовый стиль для всего приложения -->
+    <!-- ОБРАТИТЕ ВНИМАНИЕ: тема НАСЛЕДУЕТСЯ от Theme.AppCompat -->
+    <style name="Theme.MyTaskTracker" parent="Theme.AppCompat.DayNight.NoActionBar">
+    </style>
+</resources>
