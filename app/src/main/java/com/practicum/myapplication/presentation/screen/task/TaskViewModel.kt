@@ -9,50 +9,43 @@ import com.practicum.myapplication.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
     private val repository: TaskRepository
 ) : ViewModel() {
 
-    private val _tasks = MutableLiveData<List<Task>>()
-    val tasks: LiveData<List<Task>> = _tasks
-
-    init {
-        loadTasks()
-    }
-
-    private fun loadTasks() {
-        viewModelScope.launch {
-            _tasks.value = repository.getAllTasks()
-        }
-    }
+    val tasks = repository.getAllTasksFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     fun addTask(task: Task) {
         viewModelScope.launch {
             repository.addTask(task)
-            loadTasks()
         }
     }
 
     fun toggleTask(task: Task) {
         viewModelScope.launch {
             repository.updateTask(task.copy(isCompleted = !task.isCompleted))
-            loadTasks()
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             repository.deleteTask(task)
-            loadTasks()
         }
     }
 
     fun updateTask(task: Task) {
         viewModelScope.launch {
             repository.updateTask(task)
-            loadTasks()
         }
     }
 }
