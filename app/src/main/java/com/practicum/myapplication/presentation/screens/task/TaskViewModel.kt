@@ -1,7 +1,5 @@
-package com.practicum.myapplication.presentation.screen.task
+package com.practicum.myapplication.presentation.screens.task
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.myapplication.Task
@@ -9,7 +7,6 @@ import com.practicum.myapplication.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 

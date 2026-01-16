@@ -6,9 +6,10 @@ data class Task(
     val id: Int,
     val title: String,
     val isCompleted: Boolean,
-    val category: String = "Общее"
+    val category: String = "Общее",
+    val createdAt: Long = System.currentTimeMillis()
 ) {
-    fun toEntity() = TaskEntity(id,title,isCompleted, category)
+    fun toEntity() = TaskEntity(id,title,isCompleted, category, createdAt)
 }
 
-fun TaskEntity.toTask() = Task(id, title, isCompleted, category)
+fun TaskEntity.toTask() = Task(id, title, isCompleted, category, createdAt)

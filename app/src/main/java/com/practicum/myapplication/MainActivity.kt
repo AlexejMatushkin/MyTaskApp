@@ -9,8 +9,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.practicum.myapplication.presentation.screen.stats.StatsScreen
-import com.practicum.myapplication.presentation.screen.task.TaskScreen
+import com.practicum.myapplication.presentation.screens.stats.StatsScreen
+import com.practicum.myapplication.presentation.screens.task.TaskScreen
 import com.practicum.myapplication.presentation.settings.SettingsScreen
 import com.practicum.myapplication.ui.theme.MyApplicationTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -40,7 +40,7 @@ fun MyAppNavHost(
         startDestination = "tasks"
     ) {
         composable("tasks") { TaskScreen(navController = navController) }
-        composable("stats") { StatsScreen() }
+        composable("stats") { StatsScreen(navController = navController) }
         composable("settings") { SettingsScreen(navController = navController) }
     }
 }

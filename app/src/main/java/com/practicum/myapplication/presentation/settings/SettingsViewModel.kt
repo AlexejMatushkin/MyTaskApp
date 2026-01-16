@@ -1,19 +1,20 @@
 package com.practicum.myapplication.presentation.settings
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.practicum.myapplication.Task
 import com.practicum.myapplication.data.json.FileHelper
 import javax.inject.Inject
 import com.practicum.myapplication.domain.repository.TaskRepository
-import com.practicum.myapplication.presentation.screen.task.TaskViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -53,6 +54,28 @@ class SettingsViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _importResult.value = "Ошибка импорта: ${e.message}"
+            }
+        }
+    }
+
+    fun  readTasksFromJson(uri: Uri) : Flow<List<Task>> = flow {
+        try {
+            context.contentResolver.openInputStream(uri)?.use {  inputStream ->
+                val tasks = fileHelper.importTasks(inputStream)
+                emit(tasks)
+            }
+        } catch (e: Exception) {
+
+        }
+    }
+
+    fun importSelectedTasks(tasks: List<Task>) {
+        viewModelScope.launch {
+            try {
+                repository.insertTasks(tasks)
+                // Room Flow автоматически обновит UI в TaskScreen
+            } catch (e: Exception) {
+                // Можно добавить обработку ошибок
             }
         }
     }
