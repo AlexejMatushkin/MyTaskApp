@@ -1,4 +1,4 @@
-package com.practicum.myapplication.presentation.settings
+package com.practicum.myapplication.presentation.screens.settings
 
 import android.content.Context
 import android.net.Uri
@@ -6,7 +6,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.myapplication.Task
+import com.practicum.myapplication.domain.model.Task
+import com.practicum.myapplication.data.AuthManager
+import com.practicum.myapplication.data.SyncTaskRepository
 import com.practicum.myapplication.data.json.FileHelper
 import javax.inject.Inject
 import com.practicum.myapplication.domain.repository.TaskRepository
@@ -20,6 +22,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: TaskRepository,
+    private val authManager: AuthManager,
     @ApplicationContext private val context: Context
 ) : ViewModel( ) {
 
@@ -28,6 +31,49 @@ class SettingsViewModel @Inject constructor(
     val exportResult: LiveData<String> = _exportResult
     private val _importResult = MutableLiveData<String>()
     val importResult: LiveData<String> = _importResult
+    private val _authState = MutableLiveData<Boolean>()
+    val authState: LiveData<Boolean> = _authState
+    private val _isSyncEnabled = MutableLiveData<Boolean>(false)
+    val isSyncEnabled: LiveData<Boolean> = _isSyncEnabled
+
+    private val preferences = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+    private val SYNC_ENABLED_KEY = "sync_enabled"
+
+    init {
+        _authState.value = authManager.isSignedIn()
+
+        val savedSyncEnabled = preferences.getBoolean(SYNC_ENABLED_KEY, false)
+        if (savedSyncEnabled && authManager.isSignedIn()) {
+            enableSyncIfNeeded()
+        } else {
+            _isSyncEnabled.value = false
+        }
+    }
+
+
+    fun toggleSync(enabled: Boolean) {
+        if (enabled && !authManager.isSignedIn()) {
+            return
+        }
+
+        if (repository is SyncTaskRepository) {
+            if (enabled) {
+                repository.enableSync()
+            } else {
+                repository.disableSync()
+            }
+            _isSyncEnabled.value = enabled
+
+            preferences.edit().putBoolean(SYNC_ENABLED_KEY, enabled).apply()
+        }
+    }
+
+    private fun enableSyncIfNeeded() {
+        if (repository is SyncTaskRepository) {
+            repository.enableSync()
+            _isSyncEnabled.value = true
+        }
+    }
 
     fun exportTasksToUri(uri: Uri) {
         viewModelScope.launch {

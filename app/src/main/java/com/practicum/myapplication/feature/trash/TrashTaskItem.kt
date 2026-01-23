@@ -1,51 +1,69 @@
-package com.practicum.myapplication.presentation.backup
+package com.practicum.myapplication.feature.trash
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.practicum.myapplication.R
 import com.practicum.myapplication.domain.model.Task
 
 @Composable
-fun ImportTaskItem(
+fun TrashTaskItem(
     task: Task,
-    isSelected: Boolean,
-    onToggleSelection: () -> Unit,
+    onRestore: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onToggleSelection() }
+            .padding(16.dp)
     ) {
-        Row(modifier = Modifier
+        Row(
+            modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = isSelected,
-                onCheckedChange = null // handled by parent click
-            )
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onRestore
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_outline_restore_24),
+                    contentDescription = "Восстановить"
+                )
+            }
+
+            IconButton(
+                onClick = onDelete
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Удалить навсегда",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = task.title,
-                    style = if (task.isCompleted) {
-                        MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.LineThrough)
-                    } else {
-                        MaterialTheme.typography.bodyMedium
-                    }
+                    style = MaterialTheme.typography.bodyMedium,
+                    textDecoration = TextDecoration.LineThrough
                 )
                 Text(
                     text = "Категория: ${task.category}",

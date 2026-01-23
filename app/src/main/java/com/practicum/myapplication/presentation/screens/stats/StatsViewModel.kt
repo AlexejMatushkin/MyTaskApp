@@ -2,10 +2,9 @@ package com.practicum.myapplication.presentation.screens.stats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.myapplication.Task
+import com.practicum.myapplication.domain.model.Task
 import com.practicum.myapplication.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn

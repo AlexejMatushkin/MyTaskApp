@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "90465094968",
+    "project_id": "my-task-tracker-6793f",
+    "storage_bucket": "my-task-tracker-6793f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:90465094968:android:15319e5fbd2d5d746985cd",
+        "android_client_info": {
+          "package_name": "com.practicum.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6lxJtv7vxASXxHGERuq9Ndc47FzijkhQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

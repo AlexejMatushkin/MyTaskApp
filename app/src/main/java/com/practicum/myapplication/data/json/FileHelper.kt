@@ -3,7 +3,7 @@ package com.practicum.myapplication.data.json
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.practicum.myapplication.Task
+import com.practicum.myapplication.domain.model.Task
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream

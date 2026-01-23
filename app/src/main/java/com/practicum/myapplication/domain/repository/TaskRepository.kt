@@ -1,6 +1,6 @@
 package com.practicum.myapplication.domain.repository
 
-import com.practicum.myapplication.Task
+import com.practicum.myapplication.domain.model.Task
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
@@ -10,4 +10,5 @@ interface TaskRepository {
     suspend fun deleteTask(task: Task)
     suspend fun clearAllTasks()
     suspend fun insertTasks(tasks: List<Task>)
+    suspend fun getAllTasks(): List<Task>
 }

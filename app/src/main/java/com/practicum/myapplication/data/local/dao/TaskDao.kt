@@ -31,4 +31,11 @@ interface TaskDao {
     suspend fun insertTasks(tasks: List<TaskEntity>) {
         tasks.forEach { insertTask(it) }
     }
+
+    @Query("SELECT * FROM tasks")
+    suspend fun getAllTasks(): List<TaskEntity>
+
+    @Query("SELECT * FROM tasks")
+    fun getActiveTasksFlow(): Flow<List<TaskEntity>>
+
 }
