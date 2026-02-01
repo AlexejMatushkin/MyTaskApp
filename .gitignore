@@ -16,3 +16,5 @@ local.properties
 build/
 .kotlin/
 .idea/
+google-services.json
+google-services.json.cache

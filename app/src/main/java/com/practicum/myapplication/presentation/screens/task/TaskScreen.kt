@@ -1,8 +1,5 @@
-package com.practicum.myapplication.presentation.screen.task
+package com.practicum.myapplication.presentation.screens.task
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,16 +10,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -36,45 +38,45 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.practicum.myapplication.Task
-import com.practicum.myapplication.ui.theme.MyApplicationTheme
-import dagger.hilt.android.AndroidEntryPoint
-
-@AndroidEntryPoint
-class TaskActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MyApplicationTheme{
-                TaskScreen()
-            }
-        }
-    }
-}
+import androidx.navigation.NavController
+import com.practicum.myapplication.domain.model.Task
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.practicum.myapplication.R
+import com.practicum.myapplication.domain.presentation.CategoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
-    viewModel: TaskViewModel = viewModel()
+    viewModel: TaskViewModel = hiltViewModel(),
+    categoryViewModel: CategoryViewModel = hiltViewModel(),
+    navController: NavController
 ) {
-    val tasks by viewModel.tasks.observeAsState(emptyList())
-    val categories = listOf("Общее", "Работа", "Личное", "Покупки")
-    var taskIdToDelete by remember { mutableStateOf<Int?>(null) }
+    val tasks by viewModel.tasks.collectAsState(emptyList())
+    var taskToDelete by remember { mutableStateOf<Task?>(null) }
+    val categories by categoryViewModel.categories.collectAsState(listOf())
+    val categoryNames = categories.map { it.name }
+    var selectedCategory by remember { mutableStateOf("") }
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
+    var showDeleteCategoryDialog by remember { mutableStateOf(false) }
+    var categoryToDelete by remember { mutableStateOf("") }
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedFilter by remember { mutableStateOf("Все") }
-    val allCategories = listOf("Все") + categories
+    val allCategories = listOf("Все") + categories.map { it.name }
+    var showCreateCategoryDialog by remember { mutableStateOf(false) }
+    var newCategoryName by remember { mutableStateOf("") }
 
     val filteredTasks = if (selectedFilter == "Все") {
         tasks
@@ -84,6 +86,28 @@ fun TaskScreen(
 
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Мои задачи") },
+                actions = {
+                    IconButton(onClick = { navController.navigate("trash") }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Корзина"
+                        )
+                    }
+                    IconButton(onClick = { navController.navigate("stats") }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_bar_chart_24),
+                            contentDescription = "Статистика"
+                        )
+                    }
+                    IconButton(onClick = { navController.navigate("settings") }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Настройки" )
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Добавить задачу")
@@ -134,9 +158,10 @@ fun TaskScreen(
                     items(filteredTasks) { task ->
                         TaskItem(
                             task = task,
-                            onTaskToggle = { viewModel.toggleTask(task) },
-                            onDelete = { taskIdToDelete = task.id },
-                            onEdit = { taskToEdit = task }
+                            onToggle = { viewModel.toggleTask(task) },
+                            onDelete = { taskToDelete  = task },
+                            onEdit = { taskToEdit = task },
+                            modifier = Modifier
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
@@ -146,8 +171,14 @@ fun TaskScreen(
 
 
         if (showAddDialog) {
+
+            LaunchedEffect(categories) {
+                if (selectedCategory.isEmpty() || !categoryNames.contains(selectedCategory)) {
+                    selectedCategory = categories.firstOrNull()?.name ?: "Общее"
+                }
+            }
+
             var title by remember { mutableStateOf("") }
-            var selectedCategory by remember { mutableStateOf(categories[0]) }
             var expanded by remember { mutableStateOf(false) }
 
             AlertDialog(
@@ -178,15 +209,53 @@ fun TaskScreen(
                                 expanded = expanded,
                                 onDismissRequest = { expanded = false }
                             ) {
-                                categories.forEach { category ->
+                                // Существующие категории
+                                categoryNames.filter { it != "Общее" }.forEach { categoryName -> // Защитим базовую категорию
                                     DropdownMenuItem(
-                                        text = { Text(category) },
+                                        text = {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(categoryName)
+                                                IconButton(
+                                                    onClick = {
+                                                        expanded = false
+                                                        showDeleteCategoryDialog = true
+                                                        categoryToDelete = categoryName
+                                                    },
+                                                    modifier = Modifier.size(24.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Close,
+                                                        contentDescription = "Удалить категорию",
+                                                        tint = MaterialTheme.colorScheme.error
+                                                    )
+                                                }
+                                            }
+                                        },
                                         onClick = {
-                                            selectedCategory = category
+                                            selectedCategory = categoryName
                                             expanded = false
                                         }
                                     )
                                 }
+
+                                // Разделитель и опция создания новой
+                                Divider()
+                                DropdownMenuItem(
+                                    text = {
+                                        Row {
+                                            Icon(Icons.Default.Add, contentDescription = null)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("Создать новую...")
+                                        }
+                                    },
+                                    onClick = {
+                                        expanded = false
+                                        showCreateCategoryDialog = true
+                                    }
+                                )
                             }
                         }
                     }
@@ -216,26 +285,102 @@ fun TaskScreen(
             )
         }
 
-        if (taskIdToDelete != null) {
+        if (showCreateCategoryDialog) {
             AlertDialog(
-                onDismissRequest = { taskIdToDelete = null },
-                title = { Text("Удалить задачу?") },
-                text = { Text("Вы уверены, что хотите удалить эту задачу?") },
+                onDismissRequest = {
+                    showCreateCategoryDialog = false
+                    newCategoryName = ""
+                },
+                title = { Text("Новая категория") },
+                text = {
+                    TextField(
+                        value = newCategoryName,
+                        onValueChange = { newCategoryName = it },
+                        label = { Text("Название категории") },
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        enabled = newCategoryName.isNotBlank(),
+                        onClick = {
+                            val categoryName = newCategoryName.trim()
+                            categoryViewModel.addCategory(categoryName)
+                            selectedCategory = categoryName
+                            showCreateCategoryDialog = false
+                            newCategoryName = ""
+                        }
+                    ) {
+                        Text("Создать")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showCreateCategoryDialog = false
+                        newCategoryName = ""
+                    }) {
+                        Text("Отмена")
+                    }
+                }
+            )
+        }
+
+        if (showDeleteCategoryDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showDeleteCategoryDialog = false
+                    categoryToDelete = ""
+                },
+                title = { Text("Удалить категорию?") },
+                text = {
+                    Text("Все задачи в категории \"$categoryToDelete\" будут перемещены в \"Общее\".")
+                },
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            val task = tasks.find { it.id == taskIdToDelete }
-                            if (task != null) {
-                                viewModel.deleteTask(task)
+                            // Найти категорию по имени и удалить
+                            val categoryToRemove = categories.find { it.name == categoryToDelete }
+                            if (categoryToRemove != null) {
+                                categoryViewModel.deleteCategory(categoryToRemove)
+                                // Переместить задачи в "Общее"
+                                viewModel.moveTasksToGeneral(categoryToDelete)
+                                selectedCategory = "Общее"
                             }
-                            taskIdToDelete = null
+                            showDeleteCategoryDialog = false
+                            categoryToDelete = ""
+                        }
+                    ) {
+                        Text("Удалить")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showDeleteCategoryDialog = false
+                        categoryToDelete = ""
+                    }) {
+                        Text("Отмена")
+                    }
+                }
+            )
+        }
+
+        taskToDelete?.let { task ->
+            AlertDialog(
+                onDismissRequest = { taskToDelete = null },
+                title = { Text("Удалить задачу?") },
+                text = { Text("Задача будет перемещена в корзину.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteTask(task)
+                            taskToDelete = null
                         }
                     ) {
                         Text("Да")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { taskIdToDelete = null }) {
+                    TextButton(onClick = { taskToDelete = null }) {
                         Text("Нет")
                     }
                 }
@@ -277,9 +422,9 @@ fun TaskScreen(
                             ) {
                                 categories.forEach { category ->
                                     DropdownMenuItem(
-                                        text = { Text(category) },
+                                        text = { Text(category.name) },
                                         onClick = {
-                                            selectedCategory = category
+                                            selectedCategory = category.name
                                             expanded = false
                                         }
                                     )
@@ -314,13 +459,16 @@ fun TaskScreen(
 @Composable
 fun TaskItem(
     task: Task,
-    onTaskToggle: () -> Unit,
-    onDelete: () -> Unit,
-    onEdit: () -> Unit,
-    modifier: Modifier = Modifier
+    onToggle: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
+    onEdit: (() -> Unit)? = null,
+    onRestore: (() -> Unit)? = null,
+    isSelected: Boolean = false,
+    onToggleSelection: (() -> Unit)? = null,
+    modifier: Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(8.dp)
     ) {
@@ -331,14 +479,16 @@ fun TaskItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = onDelete
+                onClick = { onDelete?.invoke() },
+                enabled = onDelete != null
             ) {
                 Icon(
                     Icons.Default.Delete, contentDescription = "Удалить задачу"
                 )
             }
             IconButton(
-                onClick = onEdit
+                onClick = { onEdit?.invoke() },
+                enabled = onEdit != null
             ) {
                 Icon(
                     Icons.Default.Edit, contentDescription = "Редактировать"
@@ -346,7 +496,7 @@ fun TaskItem(
             }
             Checkbox(
                 checked = task.isCompleted,
-                onCheckedChange = { onTaskToggle() }
+                onCheckedChange = { onToggle?.invoke() }
             )
             Column(
                 modifier = Modifier.weight(1f)

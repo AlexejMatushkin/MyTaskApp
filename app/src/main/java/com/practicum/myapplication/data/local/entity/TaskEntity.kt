@@ -8,5 +8,7 @@ data class TaskEntity(
     @PrimaryKey val  id: Int,
     val title: String,
     val isCompleted: Boolean,
-    val category: String
+    val category: String,
+    val deleted: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
 )
